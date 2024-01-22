@@ -57,7 +57,6 @@ function createValidationsForSection(section) {
     return validation;
 }
 
-
 function validateRequest(request, learnedModel) {
     const response = {
         valid: true,
@@ -113,7 +112,6 @@ function createErrorRecord(section, fieldName, msg, value) {
 
     return record;
 }
-
 
 module.exports = {
     createValidations,
