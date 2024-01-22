@@ -129,7 +129,7 @@ function validateSection(sectionName, sectionData, learnedModel) {
     // find which required fields are not found in the request
     const requiredFieldsNotFound = learnedModel.requiredFields.filter(item => !foundFields.includes(item));
     requiredFieldsNotFound.forEach(fieldName => {
-        result.push(createErrorRecord(sectionName, fieldName.name, 'missing required field'));
+        result.push(createErrorRecord(sectionName, fieldName, 'missing required field'));
     });
 
     return result;
