@@ -51,9 +51,14 @@ function validateDate(value) {
 }
 
 /**
- * create validations for each section (query params, headers and body)
+ * create validations for each section.
  * @param {*} model 
- * @returns validation object that contains all the required data for validate a request
+ * @returns validation object that contains all the required data for validate a section in request: 
+ * for each section (like query params, headers and body) will be an object containing:
+ *  {
+        requiredFields: [], // array of required fields
+        fields: {} // for each field array of validation functions
+    }
  */
  function createValidations(model) {
     const validations = {};
@@ -61,25 +66,6 @@ function validateDate(value) {
         validations[section] = createValidationsForSection(model[section]); 
     });
     return validations;
-}
-
-function validateRequest(request, learnedModel) {
-    const response = {
-        valid: true,
-    };
-
-    let abnormalFields = [];
-
-    Object.keys(learnedModel).forEach(section => {
-        abnormalFields = abnormalFields.concat(validateSection(section, request[section], learnedModel[section]));
-    });
-
-    if (abnormalFields.length > 0) {
-        response.valid = false;
-        response.abnormalFields = abnormalFields;
-    }
-
-    return response;
 }
 
 function createValidationsForSection(section) {
@@ -101,6 +87,25 @@ function getValidationsFunctionsForField(field) {
     field.types.forEach(type => validationFunctions.push(validationByType[type]));
 
     return validationFunctions;
+}
+
+function validateRequest(request, learnedModel) {
+    const response = {
+        valid: true,
+    };
+
+    let abnormalFields = [];
+
+    Object.keys(learnedModel).forEach(section => {
+        abnormalFields = abnormalFields.concat(validateSection(section, request[section], learnedModel[section]));
+    });
+
+    if (abnormalFields.length > 0) {
+        response.valid = false;
+        response.abnormalFields = abnormalFields;
+    }
+
+    return response;
 }
 
 function validateSection(sectionName, sectionData, learnedModel) {
