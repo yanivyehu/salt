@@ -116,21 +116,36 @@ function validateSection(sectionName, sectionData, learnedModel) {
         const validateFunctions = learnedModel.fields[field.name];
 
         if (validateFunctions) {
+            // if a validation function returns true, the other functions will not be called
             if (!(validateFunctions.some(f => f(field.value)))) {
-                result.push({section: sectionName, name: field.name, value: field.value, error: 'type mismatch'});
+                result.push(createErrorRecord(sectionName, field.name, 'type mismatch', field.value,));
             }
         } else {
             // unexpected parameter
-            result.push({section: sectionName, name: field.name, error: 'unexpected field'});
+            result.push(createErrorRecord(sectionName, field.name, 'unexpected field'));
         }
     });
 
+    // find which required fields are not found in the request
     const requiredFieldsNotFound = learnedModel.requiredFields.filter(item => !foundFields.includes(item));
     requiredFieldsNotFound.forEach(fieldName => {
-        result.push({section: sectionName, name: fieldName, error: 'missing required field'});
+        result.push(createErrorRecord(sectionName, fieldName.name, 'missing required field'));
     });
 
     return result;
+}
+
+function createErrorRecord(section, fieldName, msg, value) {
+    const record = {
+        section: section,
+        name: fieldName,
+        error: msg
+    }
+
+    if (value)
+        record.value = value;
+
+    return record;
 }
 
 
