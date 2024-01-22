@@ -1,14 +1,3 @@
-const validationByType = {
-    "Int": validateInteger,
-    "Boolean": validateBoolean,
-    "String": validateString,
-    "List": validateList,
-    "UUID": validateUUID,
-    "Auth-Token": validateaAuthToken,
-    "Email": validateEmail,
-    "Date": validateDate,
-}
-
 const regexs = {
     "UUID": /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
     "Auth-Token": /^Bearer [a-zA-Z0-9-]+$/,
@@ -16,39 +5,18 @@ const regexs = {
     "Date": /^\d{2}-\d{2}-\d{4}$/
 }
 
+const validationByType = {
+    "Int": (value) => Number.isInteger(value),
+    "Boolean": (value) => typeof(value) === 'boolean',
+    "String": (value) => typeof(value) === 'string',
+    "List": (value) => Array.isArray(value),
+    "UUID": (value) => regexs["UUID"].test(value),
+    "Auth-Token": (value) => regexs["Auth-Token"].test(value),
+    "Email": (value) => regexs["Email"].test(value),
+    "Date": (value) => regexs["Date"].test(value)
+}
+
 const sections = ['query_params', 'headers', 'body']; 
-
-function validateInteger(value) {
-    return Number.isInteger(value);
-}
-
-function validateBoolean(value) {
-    return typeof(value) === 'boolean';
-}
-
-function validateString(value) {
-    return typeof(value) === 'string';
-}
-
-function validateList(value) {
-    return Array.isArray(value);
-}
-
-function validateUUID(value) {
-    return regexs["UUID"].test(value);
-}
-
-function validateaAuthToken(value) {
-    return regexs["Auth-Token"].test(value);
-}
-
-function validateEmail(value) {
-   return regexs["Email"].test(value);
-}
-
-function validateDate(value) {
-    return regexs["Date"].test(value);
-}
 
 /**
  * create validations for each section.
@@ -57,7 +25,11 @@ function validateDate(value) {
  * for each section (like query params, headers and body) will be an object containing:
  *  {
         requiredFields: [], // array of required fields
-        fields: {} // for each field array of validation functions
+        fields: {
+            field1: [f1,f2,f3,f4],
+            field2: [f3,f4]
+            ......
+        } // for each field array of validation functions
     }
  */
  function createValidations(model) {
@@ -65,6 +37,7 @@ function validateDate(value) {
     sections.forEach(section => {
         validations[section] = createValidationsForSection(model[section]); 
     });
+
     return validations;
 }
 
@@ -85,7 +58,6 @@ function createValidationsForSection(section) {
 function getValidationsFunctionsForField(field) {
     const validationFunctions = [];
     field.types.forEach(type => validationFunctions.push(validationByType[type]));
-
     return validationFunctions;
 }
 
@@ -94,11 +66,8 @@ function validateRequest(request, learnedModel) {
         valid: true,
     };
 
-    let abnormalFields = [];
-
-    Object.keys(learnedModel).forEach(section => {
-        abnormalFields = abnormalFields.concat(validateSection(section, request[section], learnedModel[section]));
-    });
+    const abnormalFields = Object.keys(learnedModel).map(
+        sectionName => validateSection(sectionName, request[sectionName], learnedModel[sectionName])).flat();
 
     if (abnormalFields.length > 0) {
         response.valid = false;
@@ -118,18 +87,21 @@ function validateSection(sectionName, sectionData, learnedModel) {
         if (validateFunctions) {
             // if a validation function returns true, the other functions will not be called
             if (!(validateFunctions.some(f => f(field.value)))) {
-                result.push(createErrorRecord(sectionName, field.name, 'type mismatch', field.value,));
+                result.push(
+                    createErrorRecord(sectionName, field.name, 'type mismatch', field.value,));
             }
         } else {
             // unexpected parameter
-            result.push(createErrorRecord(sectionName, field.name, 'unexpected field'));
+            result.push(
+                createErrorRecord(sectionName, field.name, 'unexpected field'));
         }
     });
 
     // find which required fields are not found in the request
     const requiredFieldsNotFound = learnedModel.requiredFields.filter(item => !foundFields.includes(item));
     requiredFieldsNotFound.forEach(fieldName => {
-        result.push(createErrorRecord(sectionName, fieldName, 'missing required field'));
+        result.push(
+            createErrorRecord(sectionName, fieldName, 'missing required field'));
     });
 
     return result;
