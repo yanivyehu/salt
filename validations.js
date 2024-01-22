@@ -49,17 +49,12 @@ function createValidationsForSection(section) {
     section.forEach(field => {
         if (field.required)
             validation.requiredFields.push(field.name);
-        validation.fields[field.name] = getValidationsFunctionsForField(field);
+        validation.fields[field.name] = field.types.map(type => (validationByType[type]));
     });
 
     return validation;
 }
 
-function getValidationsFunctionsForField(field) {
-    const validationFunctions = [];
-    field.types.forEach(type => validationFunctions.push(validationByType[type]));
-    return validationFunctions;
-}
 
 function validateRequest(request, learnedModel) {
     const response = {
@@ -85,7 +80,7 @@ function validateSection(sectionName, sectionData, learnedModel) {
         const validateFunctions = learnedModel.fields[field.name];
 
         if (validateFunctions) {
-            // if a validation function returns true, the other functions will not be called
+            // array.some is good for our purpose since we want to stop the validation once one function returns true
             if (!(validateFunctions.some(f => f(field.value)))) {
                 result.push(
                     createErrorRecord(sectionName, field.name, 'type mismatch', field.value,));
