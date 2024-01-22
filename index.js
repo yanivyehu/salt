@@ -19,8 +19,7 @@ app.post('/newModels', (req, res) => {
         });
         return res.sendStatus(200);
     } catch (err) {
-        console.error(`failed to add model: ${JSON.stringify(err)}`);
-        return res.sendStatus(500);
+        return res.status(500).send(`failed to add new models: ${(err.message)}`);
     }
 })
 
@@ -31,8 +30,7 @@ app.post('/isValid', (req, res) => {
         const result = validations.validateRequest(request, learnedModel);
         return res.json(result);  
     } catch (err) {
-        console.error(`failed to validate request: ${JSON.stringify(err)}`);
-        return res.sendStatus(500);
+        return res.status(500).send(`failed to validate request: ${err.message}`);
     }
 });
 

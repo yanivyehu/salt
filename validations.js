@@ -34,10 +34,11 @@ const sections = ['query_params', 'headers', 'body'];
  */
  function createValidations(model) {
     const validations = {};
-    sections.forEach(section => {
-        validations[section] = createValidationsForSection(model[section]); 
-    });
 
+    for (const section of sections) {
+        validations[section] = createValidationsForSection(model[section]); 
+    }
+    
     return validations;
 }
 
@@ -46,11 +47,12 @@ function createValidationsForSection(section) {
         requiredFields: [],
         fields: {}
     };
-    section.forEach(field => {
+
+    for (field of section) {
         if (field.required)
-            validation.requiredFields.push(field.name);
+        validation.requiredFields.push(field.name);
         validation.fields[field.name] = field.types.map(type => (validationByType[type]));
-    });
+    }
 
     return validation;
 }
@@ -75,27 +77,27 @@ function validateRequest(request, learnedModel) {
 function validateSection(sectionName, sectionData, learnedModel) {
     const result = [];
     const foundFields = [];
-    sectionData.forEach(field => {
+    for (const field of sectionData) {
         foundFields.push(field.name);
         const validateFunctions = learnedModel.fields[field.name];
 
         if (validateFunctions) {
             // array.some is good for our purpose since we want to stop the validation once one function returns true
             if (!(validateFunctions.some(f => f(field.value)))) {
-                result.push(
-                    createErrorRecord(sectionName, field.name, 'type mismatch', field.value,));
+                result.push(createErrorRecord(sectionName, field.name, 'type mismatch', field.value,));
             }
         } else {
             // unexpected parameter
-            result.push(
-                createErrorRecord(sectionName, field.name, 'unexpected field'));
+            result.push(createErrorRecord(sectionName, field.name, 'unexpected field'));
         }
-    });
+    };
 
     // find which required fields are not found in the request
-    const requiredFieldsNotFound = learnedModel.requiredFields.filter(item => !foundFields.includes(item));
-    requiredFieldsNotFound.forEach(fieldName => result.push(
-            createErrorRecord(sectionName, fieldName, 'missing required field')));
+    const requiredFieldsNotFound = learnedModel.requiredFields.filter(field => !foundFields.includes(field));
+    for (const fieldName of requiredFieldsNotFound) {
+        result.push(createErrorRecord(sectionName, fieldName, 'missing required field'));
+    }
+
     return result;
 }
 
